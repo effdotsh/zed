@@ -68,9 +68,9 @@ use gpui::{
     AppContext, AsyncWindowContext, AvailableSpace, BackgroundExecutor, Bounds, ClipboardItem,
     Context, DispatchPhase, ElementId, EventEmitter, FocusHandle, FocusableView, FontId, FontStyle,
     FontWeight, HighlightStyle, Hsla, InteractiveText, KeyContext, Model, MouseButton, PaintQuad,
-    ParentElement, Pixels, Render, SharedString, Size, StrikethroughStyle, Styled, StyledText,
-    Subscription, Task, TextStyle, UnderlineStyle, UniformListScrollHandle, View, ViewContext,
-    ViewInputHandler, VisualContext, WeakView, WhiteSpace, WindowContext,
+    ParentElement, Pixels, Render, SharedString, Size, Styled, StyledText, Subscription, Task,
+    TextStyle, UnderlineStyle, UniformListScrollHandle, View, ViewContext, ViewInputHandler,
+    VisualContext, WeakView, WhiteSpace, WindowContext,
 };
 use highlight_matching_bracket::refresh_matching_bracket_highlights;
 use hover_popover::{hide_hover, HoverState};
@@ -1046,27 +1046,6 @@ impl CompletionsMenu {
                         } else {
                             &None
                         };
-
-                        // let highlights = gpui::combine_highlights(
-                        //     mat.ranges().map(|range| (range, FontWeight::BOLD.into())),
-                        //     styled_runs_for_code_label(&completion.label, &style.syntax).map(
-                        //         |(range, mut highlight)| {
-                        //             // Ignore font weight for syntax highlighting, as we'll use it
-                        //             // for fuzzy matches.
-                        //             highlight.font_weight = None;
-
-                        //             if completion.lsp_completion.deprecated.unwrap_or(false) {
-                        //                 highlight.strikethrough = Some(StrikethroughStyle {
-                        //                     thickness: 1.0.into(),
-                        //                     ..Default::default()
-                        //                 });
-                        //                 highlight.color = Some(cx.theme().colors().text_muted);
-                        //             }
-
-                        //             (range, highlight)
-                        //         },
-                        //     ),
-                        // );
 
                         let (_completion_width, completion_label, documentation_label) =
                             Self::truncate_completion(

@@ -113,6 +113,71 @@ impl LspAdapter for PythonLspAdapter {
         language: &Arc<language::Language>,
     ) -> Option<language::CodeLabel> {
         let label = &item.label;
+        let kind = &item.kind;
+        match kind {
+            Some(lsp::CompletionItemKind::TEXT) => println!("The kind is TEXT"),
+            Some(lsp::CompletionItemKind::METHOD) => println!("The kind is METHOD"),
+            Some(lsp::CompletionItemKind::FUNCTION) => println!("The kind is FUNCTION"),
+            Some(lsp::CompletionItemKind::CONSTRUCTOR) => println!("The kind is CONSTRUCTOR"),
+            Some(lsp::CompletionItemKind::FIELD) => println!("The kind is FIELD"),
+            Some(lsp::CompletionItemKind::VARIABLE) => println!("The kind is VARIABLE"),
+            Some(lsp::CompletionItemKind::CLASS) => println!("The kind is CLASS"),
+            Some(lsp::CompletionItemKind::INTERFACE) => println!("The kind is INTERFACE"),
+            Some(lsp::CompletionItemKind::MODULE) => println!("The kind is MODULE"),
+            Some(lsp::CompletionItemKind::PROPERTY) => println!("The kind is PROPERTY"),
+            Some(lsp::CompletionItemKind::UNIT) => println!("The kind is UNIT"),
+            Some(lsp::CompletionItemKind::VALUE) => println!("The kind is VALUE"),
+            Some(lsp::CompletionItemKind::ENUM) => println!("The kind is ENUM"),
+            Some(lsp::CompletionItemKind::KEYWORD) => println!("The kind is KEYWORD"),
+            Some(lsp::CompletionItemKind::SNIPPET) => println!("The kind is SNIPPET"),
+            Some(lsp::CompletionItemKind::COLOR) => println!("The kind is COLOR"),
+            Some(lsp::CompletionItemKind::FILE) => println!("The kind is FILE"),
+            Some(lsp::CompletionItemKind::REFERENCE) => println!("The kind is REFERENCE"),
+            Some(lsp::CompletionItemKind::FOLDER) => println!("The kind is FOLDER"),
+            Some(lsp::CompletionItemKind::ENUM_MEMBER) => println!("The kind is ENUM_MEMBER"),
+            Some(lsp::CompletionItemKind::CONSTANT) => println!("The kind is CONSTANT"),
+            Some(lsp::CompletionItemKind::STRUCT) => println!("The kind is STRUCT"),
+            Some(lsp::CompletionItemKind::EVENT) => println!("The kind is EVENT"),
+            Some(lsp::CompletionItemKind::OPERATOR) => println!("The kind is OPERATOR"),
+            Some(lsp::CompletionItemKind::TYPE_PARAMETER) => println!("The kind is TYPE_PARAMETER"),
+            None => println!("The kind is None"),
+            _ => println!("Unknown CompletionItemKind"),
+        }
+        // match item.kind.zip(item.detail.as_ref()) {
+        //     Some((lsp::CompletionItemKind::MODULE, detail)) => {
+        //         let text = format!("{label} {detail}");
+        //         println!("module: {text}");
+        //     }
+        //     Some((
+        //         lsp::CompletionItemKind::CONSTANT | lsp::CompletionItemKind::VARIABLE,
+        //         detail,
+        //     )) => {
+        //         let text = format!("{label} {detail}");
+        //         println!("const/var: {text}");
+        //     }
+        //     Some((lsp::CompletionItemKind::STRUCT, _)) => {
+        //         let text = format!("{label} struct {{}}");
+        //         println!("struct: {text}");
+        //     }
+        //     Some((lsp::CompletionItemKind::INTERFACE, _)) => {
+        //         let text = format!("{label} interface {{}}");
+        //         println!("interface: {text}");
+        //     }
+        //     Some((lsp::CompletionItemKind::FIELD, detail)) => {
+        //         let text = format!("{label} {detail}");
+        //         println!("field: {text}");
+        //     }
+        //     Some((lsp::CompletionItemKind::FUNCTION | lsp::CompletionItemKind::METHOD, detail)) => {
+        //         if let Some(signature) = detail.strip_prefix("func") {
+        //             let text = format!("{label}{signature}");
+        //             println!("func/mthod: {text}");
+        //         }
+        //     }
+        //     _ => {
+        //         println!("label: {label}");
+        //     }
+        // }
+
         let grammar = language.grammar()?;
         let highlight_id = match item.kind? {
             lsp::CompletionItemKind::METHOD => grammar.highlight_id_for_name("function.method")?,
