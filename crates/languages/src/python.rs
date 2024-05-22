@@ -116,7 +116,23 @@ impl LspAdapter for PythonLspAdapter {
         let kind = &item.kind;
         match kind {
             Some(lsp::CompletionItemKind::TEXT) => println!("The kind is TEXT"),
-            Some(lsp::CompletionItemKind::METHOD) => println!("The kind is METHOD"),
+            Some(lsp::CompletionItemKind::METHOD) => {
+                println!("The kind is METHOD");
+                let detail = item.detail.as_deref()?;
+                // if let Some(signature) = detail.strip_prefix("func") {
+                //     let text = format!("{label}{signature}");
+                //     let source = Rope::from(format!("func {} {{}}", &text[name_offset..]).as_str());
+                //     let runs = adjust_runs(
+                //         name_offset,
+                //         language.highlight_text(&source, 5..5 + text.len()),
+                //     );
+                //     return Some(CodeLabel {
+                //         filter_range: 0..label.len(),
+                //         text,
+                //         runs,
+                //     });
+                // }
+            }
             Some(lsp::CompletionItemKind::FUNCTION) => println!("The kind is FUNCTION"),
             Some(lsp::CompletionItemKind::CONSTRUCTOR) => println!("The kind is CONSTRUCTOR"),
             Some(lsp::CompletionItemKind::FIELD) => println!("The kind is FIELD"),
