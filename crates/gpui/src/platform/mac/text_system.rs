@@ -435,6 +435,29 @@ impl MacTextSystemState {
     }
 
     fn layout_line(&mut self, text: &str, font_size: Pixels, font_runs: &[FontRun]) -> LineLayout {
+        // let mut bytes = str_to_u16_vec(text);
+        // println!("------------------");
+        // let mut unicode_vector: Vec<u32> = text.chars().map(|c| c as u32).collect();
+        // // println!("{:?}", bytes);
+        // for b in unicode_vector.iter_mut() {
+        //     if *b > 0 && *b < 31 {
+        //         // *b = 'X' as u16; //� 65533
+        //         *b = '\u{FFFD}' as u32;
+        //         font_runs[0].to_owned().len += 2;
+        //         // *b = '❓' as u32;
+        //     }
+        //     // *b = 0;
+        // }
+        // let string: String = unicode_vector
+        //     .iter()
+        //     .map(|&c| std::char::from_u32(c).unwrap_or('\u{FFFD}')) // '\u{FFFD}' is the replacement character for invalid code points
+        //     .collect();
+        // let text = string.as_str();
+        // if font_runs.len() > 0 {
+        //     println!("{} {} ", font_runs.len(), font_runs[0].len);
+        // }
+        // println!("{} -> {:?}", text, unicode_vector);
+
         // Construct the attributed string, converting UTF8 ranges to UTF16 ranges.
         let mut string = CFMutableAttributedString::new();
         {

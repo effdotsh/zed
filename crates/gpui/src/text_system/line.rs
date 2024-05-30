@@ -1,10 +1,11 @@
 use crate::{
-    black, fill, point, px, size, Bounds, Hsla, LineLayout, Pixels, Point, Result, SharedString,
-    StrikethroughStyle, UnderlineStyle, WindowContext, WrapBoundary, WrappedLineLayout,
+    black, fill, point, px, size, Bounds, GlyphId, Hsla, LineLayout, Pixels, Point, Result,
+    SharedString, StrikethroughStyle, UnderlineStyle, WindowContext, WrapBoundary,
+    WrappedLineLayout,
 };
 use derive_more::{Deref, DerefMut};
 use smallvec::SmallVec;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 /// Set the text decoration for a run of text.
 #[derive(Debug, Clone)]
