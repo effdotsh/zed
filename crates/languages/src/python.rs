@@ -104,6 +104,7 @@ impl LspAdapter for PythonLspAdapter {
             let Some(first) = parts.next() else { continue };
             let Some(second) = parts.next() else { continue };
             let Some(_) = parts.next() else { continue };
+            // sort_text.clone_from(&second.to_string());
             sort_text.replace_range(first.len() + second.len() + 1.., "");
         }
     }

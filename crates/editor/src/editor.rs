@@ -1206,6 +1206,12 @@ impl CompletionsMenu {
                     sort_text: Option<&'a str>,
                     sort_key: (usize, &'a str),
                 },
+                Fallback {
+                    starts_with_underscore: Reverse<bool>,
+                    completion_text: String,
+                    score: Reverse<OrderedFloat<f64>>,
+                    sort_text: Option<&'a str>,
+                },
             }
 
             let completion = &completions[mat.candidate_id];
@@ -1213,17 +1219,39 @@ impl CompletionsMenu {
             let sort_text = completion.lsp_completion.sort_text.as_deref();
             let score = Reverse(OrderedFloat(mat.score));
 
+            // println!(
+            //     "{} {} {} {}",
+            //     mat.score,
+            //     sort_key.0,
+            //     sort_key.1,
+            //     sort_text.unwrap_or("default")
+            // );
             if mat.score >= 0.2 {
+                // println!("strong");
                 MatchScore::Strong {
                     sort_text,
                     score,
                     sort_key,
                 }
-            } else {
+            // } else {
+            } else if mat.score >= 0_f64 {
                 MatchScore::Weak {
                     score,
                     sort_text,
                     sort_key,
+                }
+            } else {
+                //     // println!("fallback");
+
+                let completion_text = sort_key.1.to_lowercase();
+                let starts_with_underscore = Reverse(!completion_text.starts_with('_'));
+
+                MatchScore::Fallback {
+                    score,
+                    sort_text,
+                    // priority_0: sort_text.ok_or("").unwrap_or("") == "0000",
+                    starts_with_underscore,
+                    completion_text,
                 }
             }
         });
