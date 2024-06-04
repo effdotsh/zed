@@ -1178,7 +1178,7 @@ impl CompletionsMenu {
         }
 
         let completions = self.completions.read();
-        matches.sort_unstable_by_key(|mat| {
+        matches.sort_by_key(|mat| {
             // We do want to strike a balance here between what the language server tells us
             // to sort by (the sort_text) and what are "obvious" good matches (i.e. when you type
             // `Creat` and there is a local variable called `CreateComponent`).
@@ -1207,10 +1207,9 @@ impl CompletionsMenu {
                     sort_key: (usize, &'a str),
                 },
                 Fallback {
+                    sort_text: Option<&'a str>,
                     starts_with_underscore: Reverse<bool>,
                     completion_text: String,
-                    score: Reverse<OrderedFloat<f64>>,
-                    sort_text: Option<&'a str>,
                 },
             }
 
@@ -1226,6 +1225,11 @@ impl CompletionsMenu {
             //     sort_key.1,
             //     sort_text.unwrap_or("default")
             // );
+            //
+            let completion_text = sort_key.1.to_lowercase();
+            let starts_with_underscore = Reverse(!completion_text.starts_with('_'));
+            println!("{} {}", sort_text.unwrap(), completion_text);
+
             if mat.score >= 0.2 {
                 // println!("strong");
                 MatchScore::Strong {
@@ -1234,20 +1238,16 @@ impl CompletionsMenu {
                     sort_key,
                 }
             // } else {
-            } else if mat.score >= 0_f64 {
+            } else if mat.score > 0_f64 {
                 MatchScore::Weak {
                     score,
                     sort_text,
                     sort_key,
                 }
             } else {
-                //     // println!("fallback");
-
-                let completion_text = sort_key.1.to_lowercase();
-                let starts_with_underscore = Reverse(!completion_text.starts_with('_'));
+                println!("fallback");
 
                 MatchScore::Fallback {
-                    score,
                     sort_text,
                     // priority_0: sort_text.ok_or("").unwrap_or("") == "0000",
                     starts_with_underscore,
