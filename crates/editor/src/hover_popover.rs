@@ -18,11 +18,13 @@ use project::{HoverBlock, InlayHintLabelPart};
 use settings::Settings;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{ops::Range, sync::Arc, time::Duration};
 use theme::ThemeSettings;
 use ui::{prelude::*, Tooltip};
 use util::TryFutureExt;
 use workspace::Workspace;
+pub const HOVER_DISMISS_DELAY: u128 = 500;
 pub const HOVER_DELAY_MILLIS: u64 = 350;
 pub const HOVER_REQUEST_DELAY_MILLIS: u64 = 200;
 
@@ -52,17 +54,25 @@ pub fn hover_at(editor: &mut Editor, anchor: Option<Anchor>, cx: &mut ViewContex
 }
 
 pub fn show_old_hover(editor: &mut Editor, cx: &mut ViewContext<Editor>) -> bool {
+    let mut old_popover_shown = false;
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+
     let info_popovers = editor.hover_state.info_popovers.clone();
     for p in info_popovers {
         let keyboard_grace = p.keyboard_grace.borrow();
-        if *keyboard_grace {
+        if *keyboard_grace || (current_time - p.time_last_hovered) < HOVER_DISMISS_DELAY {
             if let Some(anchor) = p.anchor {
                 show_hover(editor, anchor, false, cx);
-                return true;
+                old_popover_shown = true;
             }
+            println!("{}", (current_time - p.time_last_hovered));
         }
     }
-    return false;
+
+    return old_popover_shown;
 }
 
 pub struct InlayHover {
@@ -138,6 +148,10 @@ pub fn hover_at_inlay(editor: &mut Editor, inlay_hover: InlayHover, cx: &mut Vie
                     scroll_handle: ScrollHandle::new(),
                     keyboard_grace: Rc::new(RefCell::new(false)),
                     anchor: None,
+                    time_last_hovered: SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_millis(),
                 };
 
                 this.update(&mut cx, |this, cx| {
@@ -159,13 +173,6 @@ pub fn hover_at_inlay(editor: &mut Editor, inlay_hover: InlayHover, cx: &mut Vie
 /// Triggered by the `Hover` action when the cursor is not over a symbol or when the
 /// selections changed.
 pub fn hide_hover(editor: &mut Editor, cx: &mut ViewContext<Editor>) -> bool {
-    // println!(
-    //     "{}",
-    //     SystemTime::now()
-    //         .duration_since(UNIX_EPOCH)
-    //         .unwrap()
-    //         .as_secs()
-    // );
     let info_popovers = editor.hover_state.info_popovers.drain(..);
     let diagnostics_popover = editor.hover_state.diagnostic_popover.take();
     let did_hide = info_popovers.count() > 0 || diagnostics_popover.is_some();
@@ -347,6 +354,10 @@ fn show_hover(
                         scroll_handle: ScrollHandle::new(),
                         keyboard_grace: Rc::new(RefCell::new(ignore_timeout)),
                         anchor: Some(anchor),
+                        time_last_hovered: SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap()
+                            .as_millis(),
                     },
                 ));
             }
@@ -434,8 +445,6 @@ async fn parse_blocks(
 ) -> Option<View<Markdown>> {
     let mut combined_text = String::new();
     for block in blocks {
-        // println!("{:?}", block.clone().text);
-
         let language_name = if let Some(ref l) = language {
             let l = Arc::clone(l);
             l.lsp_id().clone()
@@ -534,29 +543,59 @@ impl HoverState {
         _workspace: Option<WeakView<Workspace>>,
         cx: &mut ViewContext<Editor>,
     ) -> Option<(DisplayPoint, Vec<AnyElement>)> {
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        println!("r{}", current_time);
         // If there is a diagnostic, position the popovers based on that.
         // Otherwise use the start of the hover range
+        let info_popovers = self.info_popovers.clone();
+
         let anchor = self
             .diagnostic_popover
             .as_ref()
             .map(|diagnostic_popover| &diagnostic_popover.local_diagnostic.range.start)
             .or_else(|| {
-                self.info_popovers.iter().find_map(|info_popover| {
-                    match &info_popover.symbol_range {
+                info_popovers
+                    .iter()
+                    .find_map(|info_popover| match &info_popover.symbol_range {
                         RangeInEditor::Text(range) => Some(&range.start),
                         RangeInEditor::Inlay(_) => None,
-                    }
-                })
+                    })
             })
             .or_else(|| {
-                self.info_popovers.iter().find_map(|info_popover| {
-                    match &info_popover.symbol_range {
+                info_popovers
+                    .iter()
+                    .find_map(|info_popover| match &info_popover.symbol_range {
                         RangeInEditor::Text(_) => None,
                         RangeInEditor::Inlay(range) => Some(&range.inlay_position),
-                    }
-                })
+                    })
             })?;
+
         let point = anchor.to_display_point(&snapshot.display_snapshot);
+        //Filter popovers for time
+        for i in 0..self.info_popovers.len() {
+            let current_time = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis();
+            if let Some(popover_anchor) = self.info_popovers[i].anchor {
+                let mut old_point = popover_anchor.to_display_point(&snapshot.display_snapshot);
+
+                println!(
+                    "{:?} {:?} {} {}",
+                    point, old_point, anchor.text_anchor.offset, popover_anchor.text_anchor.offset,
+                );
+                if old_point.row() == point.row()
+                    && anchor.text_anchor.offset + (old_point.column() as i32 - point.column() as i32).max(0) as usize
+                        == popover_anchor.text_anchor.offset
+                {
+                    println!("match");
+                    self.info_popovers[i].time_last_hovered = current_time;
+                }
+            }
+        }
 
         // Don't render if the relevant point isn't on screen
         if !self.visible() || !visible_rows.contains(&point.row()) {
@@ -596,6 +635,7 @@ pub struct InfoPopover {
     pub scroll_handle: ScrollHandle,
     pub keyboard_grace: Rc<RefCell<bool>>,
     pub anchor: Option<Anchor>,
+    pub time_last_hovered: u128,
 }
 
 impl InfoPopover {
