@@ -378,8 +378,10 @@ fn trim_codeblocks(input: &str) -> String {
     let mut result: Vec<&str> = Vec::new();
     let mut i = 0;
 
+    let mut open_code_block = false;
     while i < lines.len() {
         if lines[i].starts_with("```") {
+            open_code_block = !open_code_block;
             // Remove preceding empty lines
             while !result.is_empty() && result.last().unwrap().trim().is_empty() {
                 result.pop();
@@ -391,9 +393,11 @@ fn trim_codeblocks(input: &str) -> String {
             while i < lines.len() && lines[i].trim().is_empty() {
                 i += 1;
             }
+        } else if lines[i].trim().is_empty() && !open_code_block {
+            result.push("\n\\");
+            i += 1;
         } else {
             result.push(lines[i]);
-
             i += 1;
         }
     }
@@ -421,8 +425,6 @@ async fn parse_blocks(
 
     for block in blocks {
         let text = transform_codeblock(block.clone().text);
-        println!("{}", text);
-
         combined_text.push_str(text.as_str());
     }
     let rendered_block = cx
