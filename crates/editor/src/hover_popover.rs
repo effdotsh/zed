@@ -373,37 +373,36 @@ fn show_hover(
     editor.hover_state.info_task = Some(task);
 }
 
+fn trim_codeblocks(input: &str) -> String {
+    let lines: Vec<&str> = input.lines().collect();
+    let mut result: Vec<&str> = Vec::new();
+    let mut i = 0;
+
+    while i < lines.len() {
+        if lines[i].starts_with("```") {
+            // Remove preceding empty lines
+            while !result.is_empty() && result.last().unwrap().trim().is_empty() {
+                result.pop();
+            }
+
+            result.push(lines[i]);
+            i += 1;
+            //skip following empty lines
+            while i < lines.len() && lines[i].trim().is_empty() {
+                i += 1;
+            }
+        } else {
+            result.push(lines[i]);
+
+            i += 1;
+        }
+    }
+    result.join("\n")
+}
+
 fn transform_codeblock(mut input: String) -> String {
     input = input.replace("\\n", "\n").trim().to_string();
-
-    let lines: Vec<&str> = input.lines().collect();
-    let mut result: Vec<String> = Vec::new();
-    let mut i = 0;
-    let mut open_block = false;
-    while i < lines.len() {
-        let mut line = lines[i].to_string();
-        if line.starts_with("```") {
-            open_block = !open_block;
-        } else {
-            //remove mid-sentence single linebreaks
-            while i + 1 < lines.len()
-                && !lines[i + 1].trim().is_empty()
-                && !open_block
-                && !lines[i + 1].contains("```")
-            {
-                i += 1;
-                if line.contains('\n') {
-                    break;
-                }
-                line.push(' ');
-                line.push_str(lines[i]);
-            }
-        }
-        result.push(line);
-        i += 1;
-    }
-    let r = result.join("\n");
-    r
+    trim_codeblocks(input.as_str())
 }
 
 async fn parse_blocks(
@@ -422,6 +421,7 @@ async fn parse_blocks(
 
     for block in blocks {
         let text = transform_codeblock(block.clone().text);
+        println!("{}", text);
 
         combined_text.push_str(text.as_str());
     }
